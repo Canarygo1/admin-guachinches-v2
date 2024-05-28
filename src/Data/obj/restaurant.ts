@@ -37,6 +37,13 @@ export interface Municipio {
   Id: string;
   nombre: string;
   area_municipiosId:string;
+  direccion: string;
+}
+export interface AddRestaurantArgs {
+  nombre: string;
+  telefono: string;
+  direccion: string;
+  municipio: any;
 }
 export const getAllBusiness = async ():Promise<Restaurant[]> =>{
   const response = await axios.get('https://api.guachinchesmodernos.com:480/restaurant/admin');
@@ -48,6 +55,18 @@ export const updateRestaurantDetails = async (restaurantId: string, data: any) =
 
   return response.data;
 };
+export const addRestaurant = async (data: AddRestaurantArgs) => {
+const dataParse ={
+  nombre: data.nombre,
+  telefono: data.telefono,
+  direccion: data.direccion,
+  NegocioMunicipioId: data.municipio.Id,
+  ultimoPago:"2024-05-01"
+}
+  console.log('addRestaurant',dataParse);
+  const response = await axios.post(`https://api.guachinchesmodernos.com:459/restaurant`, dataParse);
+ return response.data;
+}
 export const getRestaurantById = async (restaurantId:string):Promise<Restaurant> =>{
   console.log('restaurantId',restaurantId);
   const response = await axios.get(`https://api.guachinchesmodernos.com:459/restaurant/${restaurantId}`);

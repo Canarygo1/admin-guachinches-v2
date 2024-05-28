@@ -12,18 +12,6 @@ const navigation = (): VerticalNavItemsType => {
       title: 'Restaurantes',
       icon: HomeOutline,
       path: '/restaurantes'
-    },
-    {
-      title: 'Second Page',
-      icon: EmailOutline,
-      path: '/second-page'
-    },
-    {
-      title: 'Access Control',
-      icon: ShieldOutline,
-      path: '/acl',
-      action: 'read',
-      subject: 'acl-page'
     }
   ]
 }
