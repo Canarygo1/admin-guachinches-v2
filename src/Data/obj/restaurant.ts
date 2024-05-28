@@ -50,7 +50,7 @@ export const updateRestaurantDetails = async (restaurantId: string, data: any) =
 };
 export const getRestaurantById = async (restaurantId:string):Promise<Restaurant> =>{
   console.log('restaurantId',restaurantId);
-  const response = await axios.get(`http://163.172.179.89:32432/restaurant/${restaurantId}`);
+  const response = await axios.get(`https://api.guachinchesmodernos.com:459/restaurant/${restaurantId}`);
 
   return response.data as Restaurant;
 }
