@@ -19,6 +19,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
+    "@typescript-eslint/no-unused-vars" : "off",
     "incremental": true,
     "paths": {
       "apexcharts": [
