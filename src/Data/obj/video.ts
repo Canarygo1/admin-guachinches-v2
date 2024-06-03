@@ -12,6 +12,7 @@ export interface AddVideoArgs {
   restaurantId: string;
   file:any
   title:string
+  thumbnail:string
 }
 export const getAllVideos = async (restaurantId:string):Promise<Video[]> =>{
   const response = await axios.get(`https://api.guachinchesmodernos.com:459/videos/${restaurantId}`);
@@ -26,7 +27,7 @@ export const deleteRestaurantVideo = async ({ videoId }:DeleteVideoArgs) => {
   return response.data;
 };
 
-export const uploadVideo = async ({ restaurantId, file, title }:AddVideoArgs) => {
+export const uploadVideo = async ({ restaurantId, file, title,thumbnail }:AddVideoArgs) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('title', title);
@@ -37,6 +38,8 @@ export const uploadVideo = async ({ restaurantId, file, title }:AddVideoArgs) =>
       'Content-Type': 'multipart/form-data',
     },
   });
+  const uploadThumbnail = await axios.put(`https://api.guachinchesmodernos.com:459/videos/${data.id}/thumbnail`, {thumbnail:thumbnail});
+
 
   return data;
 };

@@ -63,7 +63,6 @@ const dataParse ={
   NegocioMunicipioId: data.municipio.Id,
   ultimoPago:"2024-05-01"
 }
-  console.log('addRestaurant',dataParse);
   const response = await axios.post(`https://api.guachinchesmodernos.com:459/restaurant`, dataParse);
  return response.data;
 }
