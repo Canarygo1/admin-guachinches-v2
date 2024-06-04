@@ -29,6 +29,7 @@ export const deleteRestaurantVideo = async ({ videoId }:DeleteVideoArgs) => {
 
 export const uploadVideo = async ({ restaurantId, file, title,thumbnail }:AddVideoArgs) => {
   const formData = new FormData();
+  console.log('file',file);
   formData.append('file', file);
   formData.append('title', title);
   formData.append('restaurant_id', restaurantId);

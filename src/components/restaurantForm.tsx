@@ -73,6 +73,33 @@ const RestaurantForm: React.FC<RestaurantFormProps> = ({
               />
             </Grid>
             <Grid item xs={12}>
+              <TextField
+                label="Link de reserva"
+                value={editableFields.link_reserva}
+                onChange={handleChange('link_reserva')}
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Link de Instagram"
+                value={editableFields.instagram_link}
+                onChange={handleChange('instagram_link')}
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Link del Menu"
+                value={editableFields.menu_link}
+                onChange={handleChange('menu_link')}
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12}>
               <Autocomplete
                 options={municipios}
                 getOptionLabel={(option) => option.Nombre}

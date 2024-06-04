@@ -49,6 +49,9 @@ function RestaurantEdit({restaurantId}: {restaurantId: string}) {
     nombre: '',
     direccion: '',
     telefono: '',
+    menu_link:'',
+    instagram_link:'',
+    link_reserva:'test.com',
     ultimoPago: '',
     googleUrl: '',
     municipio: null as Area | null
@@ -62,6 +65,9 @@ function RestaurantEdit({restaurantId}: {restaurantId: string}) {
         horarios: restaurant.horarios,
         destacado: restaurant.destacado,
         nombre: restaurant.nombre,
+        link_reserva: 'test.com',
+        menu_link: restaurant.menu_link,
+        instagram_link: restaurant.instagram_link,
         direccion: restaurant.direccion,
         telefono: restaurant.telefono,
         ultimoPago: restaurant.ultimoPago,
@@ -120,7 +126,6 @@ function RestaurantEdit({restaurantId}: {restaurantId: string}) {
       }}>
         <CategoryGrid allCategories={allCategories!}  businessId={restaurant!.id} categoriesSelected={categories} />
         <VideoGallery restaurantId={restaurant!.id}/>
-
       </Grid>
       <Grid item xs={12}>
         <PhotoGallery restaurantId={restaurant!.id}/>
