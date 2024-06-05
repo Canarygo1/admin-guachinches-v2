@@ -62,7 +62,6 @@ export const updateRestaurantDetails = async (restaurantId: string, data: any) =
     instagram_link: data.instagram_link,
     link_reserva: data.link_reserva,
     menu_link: data.menu_link,
-
   });
   return response.data;
 };
