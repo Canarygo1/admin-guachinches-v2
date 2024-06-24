@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, CircularProgress, IconButton } from '@mui/material';
-import { addPhoto, AddPhotoArgs } from '../Data/obj/photo';
-import {Delete, DeleteCircle} from "mdi-material-ui";
+import { Delete } from "mdi-material-ui";
+import {AddPhotoBlogPostArgs, updateBlogPostPhoto} from "../Data/obj/blogPost";
 
 interface AddPhotoDialogProps {
-  businessId: string;
+  blogPostId: string;
   open: boolean;
   onClose: () => void;
 }
 
-const AddPhotoDialog: React.FC<AddPhotoDialogProps> = ({ open, onClose, businessId }) => {
-  const [files, setFiles] = useState<(string | ArrayBuffer)[]>([]);
+const AddBlogPostPhotoDialog: React.FC<AddPhotoDialogProps> = ({ open, onClose, blogPostId }) => {
+  const [file, setFile] = useState<string | ArrayBuffer | null>(null);
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
 
   const addPhotoMutation = useMutation({
-    mutationFn: (args: AddPhotoArgs) => addPhoto(args),
+    mutationFn: (args: AddPhotoBlogPostArgs) => updateBlogPostPhoto(args),
     onSuccess: () => {
-      console.log('Photo(s) added');
-      queryClient.refetchQueries({ queryKey: ['photos', businessId] });
-      setFiles([]);
+      console.log('Photo added');
+      queryClient.refetchQueries({ queryKey: ['blogPostDetails', blogPostId] });
+      setFile(null);
       onClose();
     },
   });
@@ -30,7 +30,7 @@ const AddPhotoDialog: React.FC<AddPhotoDialogProps> = ({ open, onClose, business
     if (typeof window !== 'undefined') {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const heic2any = require('heic2any');
-      const newFiles = Array.from(event.target.files || []).map(async (file) => {
+      const newFile = Array.from(event.target.files || []).map(async (file) => {
         if (file.type === 'image/heic') {
           return heic2any({ blob: file, toType: 'image/jpeg' })
             .then((convertedBlob: any) => {
@@ -56,8 +56,9 @@ const AddPhotoDialog: React.FC<AddPhotoDialogProps> = ({ open, onClose, business
           });
         }
       });
-      const fileContents = await Promise.all(newFiles);
-      setFiles((prevFiles) => [...prevFiles, ...fileContents]);
+
+      const fileContents = await Promise.all(newFile);
+      setFile(fileContents[0]);
       setLoading(false);
     }
   };
@@ -65,7 +66,7 @@ const AddPhotoDialog: React.FC<AddPhotoDialogProps> = ({ open, onClose, business
   const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setLoading(true);
-    const newFiles = Array.from(event.dataTransfer.files).map(async (file) => {
+    const newFile = Array.from(event.dataTransfer.files).map(async (file) => {
       if (file.type === 'image/heic') {
         if (typeof window !== 'undefined') {
           // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -96,50 +97,46 @@ const AddPhotoDialog: React.FC<AddPhotoDialogProps> = ({ open, onClose, business
       }
     });
 
-    const fileContents = await Promise.all(newFiles);
-    setFiles((prevFiles) => [...prevFiles, ...fileContents]);
+    const fileContents = await Promise.all(newFile);
+    setFile(fileContents[0]);
     setLoading(false);
   };
 
   const handleAddPhoto = () => {
-    files.forEach((file) => {
-      if (typeof file === 'string') {
-        addPhotoMutation.mutate({ businessId, photo: file });
-      }
-    });
+    if (typeof file === 'string') {
+      addPhotoMutation.mutate({ blogPostId, photo: file });
+    }
   };
 
-  const handleRemovePhoto = (index: number) => {
-    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+  const handleRemovePhoto = () => {
+    setFile(null);
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth={'md'} fullWidth={true}>
-      <DialogTitle>Añadir Fotos</DialogTitle>
+      <DialogTitle>Añadir Foto</DialogTitle>
       <DialogContent
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
         style={{ border: '2px dashed gray', padding: '10px', textAlign: 'center', minHeight: '200px' }}
       >
-        <p>Arrastra y suelta las fotos aquí o</p>
-          <input type="file" onChange={handleFileChange} multiple />
+        <p>Arrastra y suelta la foto aquí o</p>
+        <input type="file" onChange={handleFileChange} />
         <div>
           {loading ? (
             <CircularProgress />
           ) : (
-            files.length > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
-                {files.map((file, index) => (
-                  <div key={index} style={{ position: 'relative', width: '100px', height: '100px', overflow: 'hidden' }}>
-                    <img src={file as string} alt={`Foto ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <IconButton
-                      onClick={() => handleRemovePhoto(index)}
-                      style={{ position: 'absolute', top: '5px', right: '5px', backgroundColor: 'rgba(255, 255, 255, 0.7)' }}
-                    >
-                     <Delete color={'error'}/>
-                    </IconButton>
-                  </div>
-                ))}
+            file && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                <div style={{ position: 'relative', width: '100px', height: '100px', overflow: 'hidden' }}>
+                  <img src={file as string} alt="Foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <IconButton
+                    onClick={handleRemovePhoto}
+                    style={{ position: 'absolute', top: '5px', right: '5px', backgroundColor: 'rgba(255, 255, 255, 0.7)' }}
+                  >
+                    <Delete color={'error'} />
+                  </IconButton>
+                </div>
               </div>
             )
           )}
@@ -149,7 +146,7 @@ const AddPhotoDialog: React.FC<AddPhotoDialogProps> = ({ open, onClose, business
         <Button onClick={onClose} color="secondary">
           Cancelar
         </Button>
-        <Button onClick={handleAddPhoto} color="primary" disabled={addPhotoMutation.isPending || files.length === 0}>
+        <Button onClick={handleAddPhoto} color="primary" disabled={addPhotoMutation.isPending || !file}>
           {addPhotoMutation.isPending ? <CircularProgress size={24} /> : 'Añadir'}
         </Button>
       </DialogActions>
@@ -157,4 +154,4 @@ const AddPhotoDialog: React.FC<AddPhotoDialogProps> = ({ open, onClose, business
   );
 };
 
-export default AddPhotoDialog;
+export default AddBlogPostPhotoDialog;

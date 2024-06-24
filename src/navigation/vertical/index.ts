@@ -5,6 +5,7 @@ import ShieldOutline from 'mdi-material-ui/ShieldOutline'
 
 // ** Type import
 import { VerticalNavItemsType } from 'src/@core/layouts/types'
+import {Post} from "mdi-material-ui";
 
 const navigation = (): VerticalNavItemsType => {
   return [
@@ -12,6 +13,11 @@ const navigation = (): VerticalNavItemsType => {
       title: 'Restaurantes',
       icon: HomeOutline,
       path: '/restaurantes'
+    },
+    {
+      title: 'Lista',
+      icon: Post,
+      path: '/blogPost'
     }
   ]
 }
