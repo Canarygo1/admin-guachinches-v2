@@ -66,7 +66,6 @@ export const updateBlogPost = async (blogPost: AddBlogPost,id:string) => {
   return response.data;
 }
 export const updateBlogPostPhoto = async ({blogPostId,photo}:AddPhotoBlogPostArgs) => {
-  console.log('photo',photo);
 
   const response = await axios.put(`https://api.guachinchesmodernos.com:459/blogPost/`+blogPostId, {
     "photo":photo,

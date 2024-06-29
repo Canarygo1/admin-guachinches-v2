@@ -165,7 +165,6 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
 
 
   const handleSave = () => {
-    console.log('Guardar')
     updateBlogPostMutation.mutate(newBlogPost);
   };
 
@@ -176,6 +175,24 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
     { field: 'photo_url', headerName: 'Foto', width: 64, renderCell: (params: any) => <img src={params.row.photo_url} style={{ width: 50, height: 50 }} /> },
     { field: 'name', headerName: 'Nombre', flex: 0.2 },
     { field: 'municipio', headerName: 'Municipio', flex: 0.2, width: 110 },
+    {
+      field: 'delete',
+      headerName: 'Delete',
+      flex: 0.5,
+      renderCell: (params: any) => {
+        return (
+          <Button
+            onClick={() => {
+              const filter = selectedRestaurants.filter((r: any) => r.id !== params.row.id);
+              setSelectedRestaurants(filter);
+              addRestaurant.mutate({ blogPostId: blogPostId as string, restaurantIds:filter.map((r: any) => r.id) });
+            }}
+          >
+            Borrar
+          </Button>
+        );
+      }
+    }
   ];
 
   const rows = selectedRestaurants.map((restaurantObj:any, index) => ({
