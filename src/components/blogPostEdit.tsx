@@ -197,7 +197,7 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
 
   const rows = selectedRestaurants.map((restaurantObj:any, index) => ({
     id: restaurantObj.id,
-    photo_url: restaurantObj.fotos[0].photoUrl || '', // Reemplaza con la URL real de la foto si tienes esa información
+    photo_url: restaurantObj.fotos[0]?restaurantObj.fotos[0].photoUrl || '' : '', // Reemplaza con la URL real de la foto si tienes esa información
     name: restaurantObj.nombre, // Reemplaza con el nombre real del restaurante si tienes esa información
     municipio: restaurantObj.municipios?.Nombre || '', // Reemplaza con la calificación real del restaurante si tienes esa información
   }));

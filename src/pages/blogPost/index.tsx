@@ -135,7 +135,7 @@ function Index() {
         <DialogTitle>Estas seguro que quieres eliminar este blogPost</DialogTitle>
         <DialogActions>
           <Button onClick={()=>{
-            setDeleteDialog(true)
+            setDeleteDialog(false)
           }} color="primary">Cancelar</Button>
           <Button onClick={()=>handleDeleteBlogPost(deleteBlogPostId)} color="primary">Eliminar</Button>
         </DialogActions>
