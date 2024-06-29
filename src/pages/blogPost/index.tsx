@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, Card, Grid, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, CircularProgress, Alert } from "@mui/material";
 import { DataGrid, esES } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addBlogPost, AddBlogPost } from "../../Data/obj/blogPost";
+import {addBlogPost, AddBlogPost, deleteBlogPost} from "../../Data/obj/blogPost";
 import Autocomplete from '@mui/material/Autocomplete';
 import { getAllBlogPosts, BlogPost } from "../../Data/obj/blogPost";
 import {useRouter} from "next/router";
@@ -10,6 +10,8 @@ import {useRouter} from "next/router";
 function Index() {
   const [filterName, setFilterName] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleteBlogPostId, setDeleteBlogPostId] = useState('');
   const queryClient = useQueryClient();
   const [newBlogPost, setNewBlogPost] = useState<AddBlogPost>({
     title: '',
@@ -25,6 +27,10 @@ function Index() {
     { field: 'subTitle', headerName: 'Subtitulo', width: 400 },
     { field: 'restaurantIds', headerName: 'Restaurantes', width: 200, renderCell: (params: any) => params.row.restaurants.length },
     { field: 'edit', headerName: 'Editar', width: 100, renderCell: (params: any) => <Button href={'/blogPost/'+params.row.id}>Editar</Button> },
+    { field: 'delete', headerName: 'Eliminar', width: 100, renderCell: (params: any) => <Button onClick={()=>{
+      setDeleteBlogPostId(params.row.id)
+      setDeleteDialog(true)
+      }}>Eliminar</Button> },
   ];
 
   const { data: blogPosts, isLoading: isBlogPostLoading, isError: isBlogPostError, error: errorBlogPost } = useQuery<BlogPost[], Error>({
@@ -33,12 +39,21 @@ function Index() {
     refetchOnWindowFocus: false,
   });
   const router = useRouter()
-
+  const handleDeleteBlogPost = (id:string)=>{
+    deleteMutation.mutate(id)
+  }
   const mutation = useMutation({
     mutationFn: (args: AddBlogPost) => addBlogPost(args),
     onSuccess: (data:any) => {
       queryClient.refetchQueries({ queryKey: ['blogPosts'] });
       router.push('/blogPost/'+data.Id)
+    },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id:string) => deleteBlogPost(id),
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: ['blogPosts'] });
+      setDeleteDialog(false)
     },
   });
 
@@ -116,6 +131,16 @@ function Index() {
           <Button onClick={handleCreateBlogPost} color="primary">Crear</Button>
         </DialogActions>
       </Dialog>
+      <Dialog open={deleteDialog}>
+        <DialogTitle>Estas seguro que quieres eliminar este blogPost</DialogTitle>
+        <DialogActions>
+          <Button onClick={()=>{
+            setDeleteDialog(true)
+          }} color="primary">Cancelar</Button>
+          <Button onClick={()=>handleDeleteBlogPost(deleteBlogPostId)} color="primary">Eliminar</Button>
+        </DialogActions>
+      </Dialog>
+
     </Grid>
   );
 }

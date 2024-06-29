@@ -82,9 +82,9 @@ export const addResraurantToBlogPost = async ({ blogPostId, restaurantIds }: Add
   console.log('addRestaurants',response.data);
   return response.data;
 }
+export const deleteBlogPost = async (id: string) => {
+  console.log('delte')
+  const response = await axios.delete(`https://api.guachinchesmodernos.com:459/blogPost/${id}`);
 
-// export const deleteRestaurantCategory = async ({ businessId, categoriaId }:AddCategoryArgs) => {
-//   const response = await axios.delete(`https://api.guachinchesmodernos.com:480/restaurant/details/${businessId}/category/${categoriaId}`);
-//
-//   return response.data;
-// };
+  return response.data;
+}
