@@ -82,3 +82,10 @@ export const getRestaurantById = async (restaurantId:string):Promise<Restaurant>
 
   return response.data as Restaurant;
 }
+
+//delete restaurant
+export const deleteRestaurant = async (restaurantId:string) => {
+  const response = await axios.delete(`https://api.guachinchesmodernos.com:459/restaurant/${restaurantId}`);
+
+  return response.data;
+}

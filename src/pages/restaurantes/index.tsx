@@ -2,7 +2,13 @@ import React, { useState } from 'react';
 import { Button, Card, Grid, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, CircularProgress, Alert } from "@mui/material";
 import { DataGrid, esES } from "@mui/x-data-grid";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {addRestaurant, AddRestaurantArgs, getAllBusiness, Restaurant} from "../../Data/obj/restaurant";
+import {
+  addRestaurant,
+  AddRestaurantArgs,
+  deleteRestaurant,
+  getAllBusiness,
+  Restaurant
+} from "../../Data/obj/restaurant";
 import { Cancel, Check } from "mdi-material-ui";
 import Autocomplete from '@mui/material/Autocomplete';
 import {Area, getAllMunicipalities} from "../../Data/obj/municipality";
@@ -10,6 +16,8 @@ import {Area, getAllMunicipalities} from "../../Data/obj/municipality";
 function Index() {
   const [filterName, setFilterName] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openDialogDelete, setOpenDialogDelete] = useState(false);
+  const [deleteRestaurantId, setDeleteRestaurantId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const [newRestaurant, setNewRestaurant] = useState<AddRestaurantArgs>({
     nombre: '',
@@ -17,13 +25,21 @@ function Index() {
     telefono: '',
     direccion: '',
   });
-
+  const handleOpenDialogDelete = (id: string) => {
+    setDeleteRestaurantId(id);
+    setOpenDialogDelete(true);
+  }
+  const handleDeleteRestaurant = (id: string) => {
+    deleteMutation.mutate(id);
+    setOpenDialogDelete(false);
+  }
   const columns = [
     { field: 'nombre', headerName: 'Nombre', width: 300 },
     { field: 'Municipio', headerName: 'Municipio', width: 200, renderCell: (params: any) => params.row.municipio.Nombre },
     { field: 'telefono', headerName: 'Teléfono', flex: 0.4 },
     { field: 'Activo', headerName: 'Activo', flex: 0.4, renderCell: (params: any) => (params.row.enable ? <Check color={'success'} /> : <Cancel color={'error'} />) },
-    { field: 'Detalles', headerName: 'Detalles', width: 100, renderCell: (params: any) => <Button href={"/restaurantes/" + params.row.id}>Abrir</Button> }
+    { field: 'Detalles', headerName: 'Detalles', width: 100, renderCell: (params: any) => <Button href={"/restaurantes/" + params.row.id}>Abrir</Button> },
+    { field: 'Borrar', headerName: 'Borrar', width: 100, renderCell: (params: any) => <Button onClick={()=>handleOpenDialogDelete(params.row.id)}>Borrar</Button> }
   ];
 
   const { data: restaurants, isLoading: isRestaurantsLoading, isError: isRestaurantError, error: errorRestaurant } = useQuery<Restaurant[], Error>({
@@ -40,6 +56,14 @@ function Index() {
   const mutation = useMutation(
     {
       mutationFn: (args: AddRestaurantArgs) => addRestaurant(args),
+      onSuccess: () => {
+        queryClient.refetchQueries({ queryKey: ['restaurants']})
+      },
+    },
+  );
+  const deleteMutation = useMutation(
+    {
+      mutationFn: (id: string) => deleteRestaurant(id),
       onSuccess: () => {
         queryClient.refetchQueries({ queryKey: ['restaurants']})
       },
@@ -149,6 +173,17 @@ function Index() {
           <Button onClick={handleCloseDialog} color="primary">Cancelar</Button>
           <Button onClick={handleCreateRestaurant} color="primary">Crear</Button>
         </DialogActions>
+      </Dialog>
+      <Dialog open={openDialogDelete} >
+        <DialogTitle>Eliminar Restaurante</DialogTitle>
+          <DialogContent>
+            <DialogContentText>¿Estás seguro de que quieres eliminar este restaurante?</DialogContentText>
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={()=>setOpenDialogDelete(false)} color="primary">Cancelar</Button>
+            <Button onClick={()=>handleDeleteRestaurant(deleteRestaurantId as string)} color="primary">Eliminar</Button>
+          </DialogActions>
       </Dialog>
     </Grid>
   );
