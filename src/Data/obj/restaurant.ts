@@ -89,3 +89,9 @@ export const deleteRestaurant = async (restaurantId:string) => {
 
   return response.data;
 }
+
+export const updatePhotoType = async (restaurantId:string, photoId:string) => {
+  const response = await axios.put(`https://api.guachinchesmodernos.com:459/restaurant/${restaurantId}/photo/${photoId}/principal`);
+
+  return response.data;
+}

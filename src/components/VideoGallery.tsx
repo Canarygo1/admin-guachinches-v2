@@ -12,7 +12,7 @@ import {
   CardHeader,
   IconButton,
 } from '@mui/material';
-import {deleteRestaurantVideo, DeleteVideoArgs, getAllVideos, Video} from '../Data/obj/video';
+import {deleteRestaurantVideo, DeleteVideoArgs, getAllVideosByRestaurant, Video} from '../Data/obj/video';
 import VideoUploadDialog from './VideoUploadDialog';
 import {Delete} from "mdi-material-ui";
 
@@ -21,7 +21,7 @@ const VideoGallery = ({ restaurantId }: { restaurantId: string }) => {
   const queryClient = useQueryClient();
 
   const { data: videos, isLoading, isError, error } = useQuery<Video[], Error>({
-    queryFn: () => getAllVideos(restaurantId as string),
+    queryFn: () => getAllVideosByRestaurant(restaurantId as string),
     queryKey: ['videos', restaurantId],
     refetchOnWindowFocus: false,
   });

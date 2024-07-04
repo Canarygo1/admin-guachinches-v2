@@ -14,12 +14,20 @@ export interface AddVideoArgs {
   title:string
   thumbnail:string
 }
-export const getAllVideos = async (restaurantId:string):Promise<Video[]> =>{
+export const getAllVideosByRestaurant = async (restaurantId:string):Promise<Video[]> =>{
   const response = await axios.get(`https://api.guachinchesmodernos.com:459/videos/${restaurantId}`);
   console.log('videos',response.data);
 
   return response.data as Video[];
 }
+
+export const getAllVideos = async ():Promise<Video[]> =>{
+  const response = await axios.get(`https://api.guachinchesmodernos.com:459/videos`);
+  console.log('videos',response.data);
+
+  return response.data as Video[];
+}
+
 export const deleteRestaurantVideo = async ({ videoId }:DeleteVideoArgs) => {
   console.log('deleteRestaurantVideo',videoId);
   const response = await axios.delete(`https://api.guachinchesmodernos.com:459/videos/${videoId}`);

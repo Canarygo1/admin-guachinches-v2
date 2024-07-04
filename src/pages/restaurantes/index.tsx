@@ -25,6 +25,7 @@ function Index() {
     telefono: '',
     direccion: '',
   });
+
   const handleOpenDialogDelete = (id: string) => {
     setDeleteRestaurantId(id);
     setOpenDialogDelete(true);
