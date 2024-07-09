@@ -7,6 +7,8 @@ export interface BlogPost {
   size: string;
   photo_url: string;
   restaurants: any[];
+  category_id: string;
+  island_id: string;
 }
 
 export interface AddBlogPost {
@@ -15,6 +17,8 @@ export interface AddBlogPost {
   size: string;
   photo: any;
   restaurantIds: string[];
+  category_id: string;
+  island_id: string;
 }
 export interface AddPhotoBlogPostArgs {
   photo: string;
@@ -54,13 +58,16 @@ export const addBlogPost = async (blogPost: AddBlogPost) => {
 export const updateBlogPost = async (blogPost: AddBlogPost,id:string) => {
   blogPost.photo = ''
   blogPost.restaurantIds = [];
-
+  console.log('updateBlogPost',blogPost)
   const response = await axios.put(`https://api.guachinchesmodernos.com:459/blogPost/`+id, {
     "title":blogPost.title,
     "subTitle":blogPost.subTitle,
     "size":blogPost.size,
     "photo":'',
+    "category_id":blogPost.category_id,
+    "island_id":blogPost.island_id
   });
+
   console.log('updateBlogPost',response.data);
 
   return response.data;

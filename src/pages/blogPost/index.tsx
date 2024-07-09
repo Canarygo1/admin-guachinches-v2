@@ -19,6 +19,8 @@ function Index() {
     photo: '',
     restaurantIds: [],
     size: '',
+    category_id: '',
+    island_id: ''
   });
 
   const columns = [

@@ -25,13 +25,11 @@ import {
   getBlogPostById, updateBlogPost
 } from "../Data/obj/blogPost";
 import {
-  AddRestaurantArgs,
   getAllBusiness,
   Restaurant,
-  updateRestaurantDetails,
-  UpdateRestaurantDetailsData
 } from "../Data/obj/restaurant";
 import AddBlogPostPhotoDialog from "./addPhotoBlogPostDialog";
+import {Category, getAllCategories} from "../Data/obj/category";
 
 function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
   const queryClient = useQueryClient();
@@ -64,6 +62,12 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
   const { data: restaurants, isLoading: isRestaurantsLoading, isError: isRestaurantError, error: errorRestaurant } = useQuery<Restaurant[], Error>({
     queryFn: getAllBusiness,
     queryKey: ['restaurants'],
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: allCategories, isLoading: isAllCategoriesLoading, isError: isAllCategoriesError, error: errorCategories } = useQuery<Category[], Error>({
+    queryFn: () => getAllCategories(),
+    queryKey: ['allCategories'],
     refetchOnWindowFocus: false,
   });
 
@@ -112,6 +116,8 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
     photo: '',
     restaurantIds: [],
     size: '',
+    category_id: '',
+    island_id:''
   });
 
   const { data: blogPost, isLoading: isBlogPostLoading, isError: isBlogPostError, error: errorBlogPost } = useQuery<BlogPost, Error>({
@@ -128,6 +134,8 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
         photo: blogPost.photo_url,
         restaurantIds: blogPost.restaurants.map(r => r.id),
         size: blogPost.size,
+        category_id: blogPost.category_id,
+        island_id: blogPost.island_id
       });
       setSelectedRestaurants(blogPost.restaurants);
     }
@@ -139,6 +147,12 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setNewBlogPost({ ...newBlogPost, size: event.target.value });
+  };
+  const handleSelectChangeIsland = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNewBlogPost({ ...newBlogPost, island_id: event.target.value });
+  };
+  const handleSelectChangeCategory = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNewBlogPost({ ...newBlogPost, category_id: event.target.value });
   };
 
   const handleRestaurantChange = (event:any, newValue:any) => {
@@ -168,7 +182,7 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
     updateBlogPostMutation.mutate(newBlogPost);
   };
 
-  if (isBlogPostLoading) return <CircularProgress />;
+  if (isBlogPostLoading || isAllCategoriesLoading) return <CircularProgress />;
   if (isBlogPostError) return <div>Error: {errorBlogPost?.message}</div>;
 
   const columns: GridColDef[] = [
@@ -227,14 +241,41 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
             <TextField
               select
               margin="dense"
-              label="Tamaño"
+              label="Isla"
+              fullWidth
+              value={newBlogPost.island_id}
+              onChange={handleSelectChangeIsland}
+            >
+              <MenuItem value="76ac0bec-4bc1-41a5-bc60-e528e0c12f4d">Tenerife</MenuItem>
+              <MenuItem value="6f91d60f-0996-4dde-9088-167aab83a21a">Gran Canaria</MenuItem>
+              <MenuItem value="6877bc07-e011-4c2f-9673-13d8434c1c18">Todos</MenuItem>
+            </TextField>
+            <TextField
+              select
+              margin="dense"
+              label="Tipo"
               fullWidth
               value={newBlogPost.size}
               onChange={handleSelectChange}
             >
               <MenuItem value="big">Grande</MenuItem>
               <MenuItem value="small">Pequeño</MenuItem>
+              <MenuItem value="category">Categoría</MenuItem>
             </TextField>
+            {newBlogPost.size === 'category' && <TextField
+              select
+              margin="dense"
+              label="Categoria"
+              fullWidth
+              value={newBlogPost.category_id}
+              onChange={handleSelectChangeCategory}
+            >
+              {allCategories!.map((category:Category) => (
+                <MenuItem key={category.id} value={category.id}>
+                  {category.nombre}
+                </MenuItem>
+              ))}
+            </TextField>}
             <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={handleSave}>
               Guardar
             </Button>
@@ -245,19 +286,22 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
         <Card sx={{
           height: '100%',
         }}>
-          <CardHeader title={'Foto'} action={<Button variant={'contained'} onClick={handleOpenPhotoDialog}>Cambiar foto</Button>} />
+          <CardHeader title={'Foto'} action={<Button variant={'contained'} onClick={handleOpenPhotoDialog}>
+            Cambiar foto</Button>} />
           <CardContent sx={{
           }}>
             <img src={newBlogPost.photo} style={{ width: '100%', height: '100%' }} />
           </CardContent>
         </Card>
       </Grid>
+      {newBlogPost.size !== 'category' &&
       <Grid item xs={12}>
         <Card>
-          <CardHeader title={'Restaurantes'} action={<Button variant={'contained'} onClick={handleClickOpen}>Añadir</Button>} />
+          <CardHeader title={'Restaurantes'}
+                      action={<Button variant={'contained'} onClick={handleClickOpen}>Añadir</Button>}/>
           <CardContent>
             <Typography variant="h5" component="div">Restaurantes</Typography>
-            <div style={{ height: 400, width: '100%' }}>
+            <div style={{height: 400, width: '100%'}}>
               <DataGrid
                 rows={rows}
                 columns={columns}
@@ -269,6 +313,7 @@ function BlogPostEdit({ blogPostId }: { blogPostId: string }) {
           </CardContent>
         </Card>
       </Grid>
+      }
       <Dialog open={open} onClose={handleClose} fullWidth={true} maxWidth={'md'}  >
         <DialogTitle>Añadir Restaurante</DialogTitle>
         <DialogContent>
