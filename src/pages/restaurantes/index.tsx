@@ -84,7 +84,8 @@ function Index() {
           })
         )
       );
-      queryClient.refetchQueries(["restaurants"]);
+      queryClient.invalidateQueries({queryKey:["restaurants"]});
+
       setOpenDialog(false);
       setSelectedSurveys([]);
       setNewRestaurant({
@@ -179,7 +180,7 @@ function Index() {
             checkboxSelection
             columns={[
               { field: 'nombre', headerName: 'Nombre', width: 300 },
-              { field: 'Municipio', headerName: 'Municipio', width: 200, renderCell: (params) => params.row.municipios.Nombre },
+              { field: 'Municipio', headerName: 'Municipio', width: 200, renderCell: (params) => params.row.municipios.Nombre! },
               { field: 'telefono', headerName: 'Teléfono', flex: 0.4 },
               { field: 'Activo', headerName: 'Activo', flex: 0.4, renderCell: (params) => (params.row.enable ? <Check color="success" /> : <Cancel color="error" />) },
               { field: 'Detalles', headerName: 'Detalles', width: 100, renderCell: (params) => <Button href={`/restaurantes/${params.row.id}`}>Abrir</Button> },
