@@ -41,7 +41,7 @@ export interface UpdateRestaurantDetailsData {
 }
 export interface Municipio {
   Id: string;
-  nombre: string;
+  Nombre: string;
   area_municipiosId:string;
   direccion: string;
 }
