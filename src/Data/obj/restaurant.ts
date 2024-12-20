@@ -52,9 +52,14 @@ export interface AddRestaurantArgs {
   municipio: any;
 }
 export const getAllBusiness = async ():Promise<Restaurant[]> =>{
-  const response = await axios.get('https://api.guachinchesmodernos.com:480/restaurant/admin');
+  const response = await axios.get('https://api.guachinchesmodernos.com:480/restaurant');
 
   return response.data.result as Restaurant[];
+}
+export const getAllBusinesByIsland = async (islandId:string):Promise<Restaurant[]> =>{
+  const response = await axios.get(`https://api.guachinchesmodernos.com:459/restaurant/by-island/${islandId}`);
+
+  return response.data as Restaurant[];
 }
 export const updateRestaurantDetails = async (restaurantId: string, data: any) => {
   const response = await axios.put(`https://api.guachinchesmodernos.com:480/restaurant/details/${restaurantId}`, data);
@@ -78,7 +83,6 @@ const dataParse ={
 }
 export const getRestaurantById = async (restaurantId:string):Promise<Restaurant> =>{
   const response = await axios.get(`https://api.guachinchesmodernos.com:459/restaurant/${restaurantId}`);
-  console.log('restaurantId',response);
 
   return response.data as Restaurant;
 }
@@ -95,3 +99,9 @@ export const updatePhotoType = async (restaurantId:string, photoId:string) => {
 
   return response.data;
 }
+
+export const getRestaurantsBySurvey = async (surveyId: string, categoryName: string) => {
+  const url = `https://api.guachinchesmodernos.com:459/category-restaurants/${surveyId}/${categoryName}`;
+  const response = await axios.get(url);
+  return response.data; // Devuelve los datos de la API
+};
