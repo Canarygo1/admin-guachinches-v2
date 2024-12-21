@@ -19,8 +19,9 @@ import {
 } from "@mui/material";
 import { DataGrid, esES } from "@mui/x-data-grid";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getRestaurantsBySurvey, getAllBusiness } from "../../Data/obj/restaurant";
 import axios from "axios";
+import { getAllBusiness } from "src/Data/obj/restaurant";
+import {getRestaurantsBySurvey} from "../../Data/obj/restaurant";
 
 function SurveyRestaurants() {
   const queryClient = useQueryClient();
@@ -34,6 +35,7 @@ function SurveyRestaurants() {
     "Mejor-Guachinche-Tradicional",
     "Mejor-Restaurante",
     "Mejor-Carne-Cabra",
+    "Mejor-Bocadillo",
     "Mejor-Japones",
     "Mejor-Vino",
     "Mejor-Plato-Canario",
@@ -130,6 +132,9 @@ function SurveyRestaurants() {
       <Grid item xs={12}>
         <Card>
           <Grid container alignItems="center" sx={{ p: 2 }} spacing={2}>
+            <Grid item xs={6}>
+              <h2>Restaurantes Asociados a la Encuesta</h2>
+            </Grid>
             <Grid item xs={4}>
               <FormControl fullWidth>
                 <InputLabel>Selecciona una encuesta</InputLabel>
@@ -146,11 +151,9 @@ function SurveyRestaurants() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={6}>
-              <h2>Restaurantes Asociados a la Encuesta</h2>
-            </Grid>
+
             <Grid item xs={2}>
-              <Button variant="contained" color="primary" onClick={handleOpenAddDialog}>
+              <Button variant="contained" color="primary" size={'medium'} onClick={handleOpenAddDialog}>
                 Añadir Restaurante
               </Button>
             </Grid>
