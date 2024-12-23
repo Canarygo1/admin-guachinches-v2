@@ -22,6 +22,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { getAllBusiness } from "src/Data/obj/restaurant";
 import {getRestaurantsBySurvey} from "../../Data/obj/restaurant";
+import { surveyOptions } from "src/Data/obj/survey";
 
 function SurveyRestaurants() {
   const queryClient = useQueryClient();
@@ -30,16 +31,7 @@ function SurveyRestaurants() {
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = useState<string | null>(null);
 
-  const surveyOptions = [
-    "Mejor-Guachinche-Moderno",
-    "Mejor-Guachinche-Tradicional",
-    "Mejor-Restaurante",
-    "Mejor-Carne-Cabra",
-    "Mejor-Bocadillo",
-    "Mejor-Japones",
-    "Mejor-Vino",
-    "Mejor-Plato-Canario",
-  ];
+
 
   // Obtener restaurantes asociados a la encuesta seleccionada
   const { data: restaurants, isLoading, isError, error } = useQuery({
@@ -155,6 +147,11 @@ function SurveyRestaurants() {
             <Grid item xs={2}>
               <Button variant="contained" color="primary" size={'medium'} onClick={handleOpenAddDialog}>
                 Añadir Restaurante
+              </Button>
+            </Grid>
+            <Grid item xs={2}>
+              <Button variant="outlined" color="primary" size={'medium'} href={"hola"} >
+                Hacer encuesta TEST
               </Button>
             </Grid>
           </Grid>

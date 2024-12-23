@@ -21,6 +21,7 @@ import { Cancel, Check } from "mdi-material-ui";
 import Autocomplete from '@mui/material/Autocomplete';
 import { getAllMunicipalitiesByIsland } from "../../Data/obj/municipality";
 import axios from "axios";
+import {surveyOptions} from "../../Data/obj/survey";
 
 function Index() {
   const [filterName, setFilterName] = useState<string | null>(null);
@@ -37,16 +38,6 @@ function Index() {
     direccion: '',
   });
 
-  // Encuestas disponibles
-  const surveyOptions = [
-    "Mejor-Guachinche-Moderno",
-    "Mejor-Guachinche-Tradicional",
-    "Mejor-Restaurante",
-    "Mejor-Carne-Cabra",
-    "Mejor-Japones",
-    "Mejor-Vino",
-    "Mejor-Plato-Canario",
-  ];
 
   // Estado para las encuestas seleccionadas
   const [selectedSurveys, setSelectedSurveys] = useState<string[]>([]);
