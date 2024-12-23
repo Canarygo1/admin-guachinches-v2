@@ -19,8 +19,6 @@ export const getAllMunicipalities = async ():Promise<Area[]> =>{
 }
 
 export const getAllMunicipalitiesByIsland = async (islandId:string):Promise<Area[]> =>{
-  console.log('hola')
   const response = await axios.get(`https://api.guachinchesmodernos.com:459/municipios/islands/${islandId}`);
-  console.log('data',response)
   return response.data as Area[];
 }

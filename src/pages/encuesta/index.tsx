@@ -150,7 +150,7 @@ function SurveyRestaurants() {
               </Button>
             </Grid>
             <Grid item xs={2}>
-              <Button variant="outlined" color="primary" size={'medium'} href={"hola"} >
+              <Button variant="outlined" color="primary" size={'medium'} target={"_blank"} href={"http://encuesta.guachinchesmodernos.com"} >
                 Hacer encuesta TEST
               </Button>
             </Grid>
