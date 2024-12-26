@@ -30,7 +30,7 @@ export const getAllVideos = async ():Promise<Video[]> =>{
 
 export const deleteRestaurantVideo = async ({ videoId }:DeleteVideoArgs) => {
   console.log('deleteRestaurantVideo',videoId);
-  const response = await axios.delete(`https://api.guachinchesmodernos.com:459/videos/${videoId}`);
+  const response = await axios.delete(`https://api.guachinchesmodernos.com:459/videos/code/${videoId}`);
 
   return response.data;
 };

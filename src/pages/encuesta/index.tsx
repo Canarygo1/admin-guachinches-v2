@@ -143,14 +143,13 @@ function SurveyRestaurants() {
                 </Select>
               </FormControl>
             </Grid>
-
             <Grid item xs={2}>
               <Button variant="contained" color="primary" size={'medium'} onClick={handleOpenAddDialog}>
                 Añadir Restaurante
               </Button>
             </Grid>
             <Grid item xs={2}>
-              <Button variant="outlined" color="primary" size={'medium'} target={"_blank"} href={"http://encuesta.guachinchesmodernos.com"} >
+              <Button variant="outlined" color="primary" size={'medium'} target={"_blank"} href={"https://encuesta.guachinchesmodernos.com"} >
                 Hacer encuesta TEST
               </Button>
             </Grid>
