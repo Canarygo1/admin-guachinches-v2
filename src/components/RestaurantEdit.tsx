@@ -38,7 +38,7 @@ function RestaurantEdit({restaurantId}: {restaurantId: string}) {
   if (municipalities) {
     // @ts-ignore
     municipios = municipalities.flatMap(zone =>
-      zone.Municipios.map(municipio => ({ ...municipio, zoneName: zone.Nombre }))
+      zone.Municipios!.map(municipio => ({ ...municipio, zoneName: zone.Nombre }))
     );
   }
 
