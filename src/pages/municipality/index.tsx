@@ -186,6 +186,66 @@ const MunicipiosTable: React.FC = () => {
               autoHeight
               getRowId={(row) => row.Id}
             />
+          <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                bgcolor: 'background.paper',
+                boxShadow: 24,
+                p: 4,
+                borderRadius: 2,
+                minWidth: 400,
+              }}
+            >
+              <h2>Editar Municipio</h2>
+              <TextField
+                label="Nombre"
+                value={editingRow?.Nombre || ''}
+                onChange={(e) =>
+                  setEditingRow((prev) => ({ ...prev, Nombre: e.target.value }))
+                }
+                fullWidth
+                style={{ marginBottom: '10px' }}
+              />
+              <FormControl fullWidth style={{ marginBottom: '10px' }}>
+                <InputLabel>Área</InputLabel>
+                <Select
+                  value={editingRow?.area_municipiosId || ''}
+                  onChange={(e) =>
+                    setEditingRow((prev) => ({ ...prev, area_municipiosId: e.target.value }))
+                  }
+                >
+                  {areas.map((area: any) => (
+                    <MenuItem key={area.Id} value={area.Id}>
+                      {area.Nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  if (editingRow) {
+                    updateMunicipio.mutate(editingRow as Municipio);
+                  }
+                }}
+                style={{ marginRight: '10px' }}
+              >
+                Guardar
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+            </Box>
+          </Modal>
 
           {/* Dialog para Crear Municipio */}
           <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
