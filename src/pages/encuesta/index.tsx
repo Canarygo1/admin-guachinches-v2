@@ -21,7 +21,7 @@ import { DataGrid, esES } from "@mui/x-data-grid";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { getAllBusiness } from "src/Data/obj/restaurant";
-import {getRestaurantsBySurvey} from "../../Data/obj/restaurant";
+import { getRestaurantsBySurvey } from "../../Data/obj/restaurant";
 import { surveyOptions } from "src/Data/obj/survey";
 
 function SurveyRestaurants() {
@@ -30,8 +30,6 @@ function SurveyRestaurants() {
   const [categoryName, setCategoryName] = useState("Mejor-Guachinche-Moderno");
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = useState<string | null>(null);
-
-
 
   // Obtener restaurantes asociados a la encuesta seleccionada
   const { data: restaurants, isLoading, isError, error } = useQuery({
@@ -46,6 +44,11 @@ function SurveyRestaurants() {
     queryFn: getAllBusiness,
     refetchOnWindowFocus: false,
   });
+
+  // Filtrar restaurantes que ya han sido añadidos
+  const availableRestaurants = allRestaurants?.filter(
+    (restaurant) => !restaurants?.some((r:any) => r.restaurant.id === restaurant.id)
+  );
 
   // Mutación para asignar un restaurante a la encuesta
   const assignRestaurantMutation = useMutation({
@@ -78,10 +81,11 @@ function SurveyRestaurants() {
   });
 
   // Preparar las filas para el DataGrid
-  const rows = restaurants?.map((item: any) => ({
-    id: item.id, // ID único para eliminar
-    restaurant: item.restaurant,
-  })) || [];
+  const rows =
+    restaurants?.map((item: any) => ({
+      id: item.id,
+      restaurant: item.restaurant,
+    })) || [];
 
   // Columnas del DataGrid
   const columns = [
@@ -148,11 +152,6 @@ function SurveyRestaurants() {
                 Añadir Restaurante
               </Button>
             </Grid>
-            <Grid item xs={2}>
-              <Button variant="outlined" color="primary" size={'medium'} target={"_blank"} href={"https://encuesta.guachinchesmodernos.com"} >
-                Hacer encuesta TEST
-              </Button>
-            </Grid>
           </Grid>
           <DataGrid
             sx={{ mt: 2 }}
@@ -164,12 +163,11 @@ function SurveyRestaurants() {
         </Card>
       </Grid>
 
-      {/* Diálogo para añadir restaurante */}
-      <Dialog maxWidth={'md'} fullWidth={true} open={openAddDialog} onClose={handleCloseAddDialog}>
+      <Dialog maxWidth={'md'} fullWidth open={openAddDialog} onClose={handleCloseAddDialog}>
         <DialogTitle>Añadir Restaurante</DialogTitle>
         <DialogContent>
           <Autocomplete
-            options={allRestaurants || []}
+            options={availableRestaurants || []}
             getOptionLabel={(option: any) => option.nombre}
             onChange={(event, newValue) => setSelectedRestaurant(newValue?.id || null)}
             renderInput={(params) => <TextField {...params} label="Selecciona un restaurante" margin="dense" fullWidth />}

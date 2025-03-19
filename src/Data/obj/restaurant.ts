@@ -71,16 +71,17 @@ export const updateRestaurantDetails = async (restaurantId: string, data: any) =
   return response.data;
 };
 export const addRestaurant = async (data: AddRestaurantArgs) => {
-const dataParse ={
-  nombre: data.nombre,
-  telefono: data.telefono,
-  direccion: data.direccion,
-  NegocioMunicipioId: data.municipio.Id,
-  ultimoPago:"2024-05-01"
-}
+  const dataParse ={
+    nombre: data.nombre,
+    telefono: data.telefono,
+    direccion: data.direccion,
+    NegocioMunicipioId: data.municipio.Id,
+    ultimoPago:"2024-05-01"
+  }
   const response = await axios.post(`https://api.guachinchesmodernos.com:459/restaurant`, dataParse);
- return response.data;
+return response.data;
 }
+
 export const getRestaurantById = async (restaurantId:string):Promise<Restaurant> =>{
   const response = await axios.get(`https://api.guachinchesmodernos.com:459/restaurant/${restaurantId}`);
 
