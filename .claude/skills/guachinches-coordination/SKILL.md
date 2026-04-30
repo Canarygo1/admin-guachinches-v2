@@ -51,13 +51,63 @@ Dispara migration si:
 2. Crea `.claude/coordination/migration-mobile/NNN-titulo.md`.
 3. Prompt autónomo: archivo a tocar (`lib/data/HttpRemoteRepository.dart`, `lib/data/model/X.dart`, Cubit afectado), patrón a respetar (Cubit + Presenter+View en pantallas complejas), navegación con `GlobalMethods.pushPage`, dotenv `ENDPOINT_V1` / `ENDPOINT_V2`.
 
+## Sistema Obsidian (vault del repo coordination)
+
+El repo `.claude/coordination/` **es un vault de Obsidian**. El estado de cada migration / task vive en su **frontmatter YAML** y se visualiza en `dashboards/migrations.canvas`, `dashboards/migrations.base` y `kanbans/migrations.md`.
+
+### Cuando creas una migration cross-repo (backend / mobile)
+
+1. Usa la plantilla (`migration-backend/PLANTILLA.md` o `migration-mobile/PLANTILLA.md`) con el bloque frontmatter al inicio:
+   ```yaml
+   ---
+   title: "..."
+   type: migration
+   repo: backend|mobile
+   status: pending
+   priority: low|medium|high
+   created: <YYYY-MM-DD>
+   applied:
+   test_added: false
+   breaking: false
+   tags: [migration, backend|mobile]
+   ---
+   ```
+2. Añade la tarjeta al Kanban (`kanbans/migrations.md`), columna `## 📋 Pendiente`:
+   ```
+   - [ ] [[NNN-slug]]
+   ```
+3. Si la migration nace de una task, rellena `origin: tasks/00X-...` en la migration y `migrations: ["migration-<repo>/NNN-..."]` en la task.
+
+### Cuando aplicas una migration de `migration-dashboard/` en este repo
+
+Después de aplicar el cambio (componente, página, llamada axios en `src/Data/obj/*.ts`):
+
+1. **Frontmatter** (`.claude/coordination/migration-dashboard/NNN-<slug>.md`):
+   - `status: pending` → `status: done`
+   - `applied: <YYYY-MM-DD de hoy>`
+2. **Bloque `## Estado`**: marcar `[x] Aplicado en fecha: <fecha>`.
+3. **Kanban** (`kanbans/migrations.md`): mover la línea desde `📋 Pendiente` a `✅ Aplicadas` con sufijo ` · dashboard · <fecha>` y marcar `[x]`.
+4. **Notas de aplicación**: rellenar `## Notas de aplicación` con qué archivos cambiaron en `src/`, qué llamadas se añadieron a `ApiRequest.js`/`Data/obj/*.ts`.
+5. Si queda **bloqueada** (esperando endpoint backend, decisión de UX): `status: blocked` y mover a `## ⛔ Bloqueadas`.
+
+### Cuando reviertes / descartas
+
+- Eliminar el archivo `.claude/coordination/migration-dashboard/NNN-<slug>.md`.
+- Eliminar la línea en `kanbans/migrations.md`.
+- Los números no se reutilizan.
+
+### Capturas de diseño
+
+Pega con `Cmd+V` en cualquier nota → Obsidian guarda en `assets/inbox/`. Para una migration con varias capturas (mockup, antes/después, errores), crea `migration-dashboard/<NNN>/assets/` y mueve las imágenes ahí.
+
 ## Cierre de tarea
 
-1. Lista las migrations creadas en este turno.
-2. Recuerda al usuario:
-   - Commit en este repo: cambios en `src/`, `package.json`. **No commitear `.env`** (contiene `JWT_SECRET`).
-   - Commit + push del repo coordination con las migrations añadidas.
+1. Lista las migrations creadas en `migration-backend/` y/o `migration-mobile/` y confirma que tienen **frontmatter completo** y están en el **Kanban** en `📋 Pendiente`.
+2. Si aplicaste alguna `migration-dashboard/`: confirma que su frontmatter está en `done` con `applied` rellenado y su tarjeta del Kanban en `✅ Aplicadas`.
 3. Si añadiste consumo de un endpoint nuevo, confirma que está listado en `shared/endpoints.md` (o que su migration-backend lo añadirá).
+4. Recuerda al usuario:
+   - Commit en este repo: cambios en `src/`, `package.json`. **No commitear `.env`** (contiene `JWT_SECRET`).
+   - Commit + push del repo coordination con las migrations nuevas, el Kanban actualizado, y `shared/*` si tocaron contratos.
 
 ## Anti-patrones específicos de este repo
 
