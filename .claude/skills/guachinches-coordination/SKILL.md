@@ -72,10 +72,11 @@ El repo `.claude/coordination/` **es un vault de Obsidian**. El estado de cada m
    tags: [migration, backend|mobile]
    ---
    ```
-2. Añade la tarjeta al Kanban (`kanbans/migrations.md`), columna `## 📋 Pendiente`:
+2. Añade la tarjeta al Kanban (`kanbans/migrations.md`), columna `## 📋 Pendiente`, **siempre con el tag del repo** (`#backend`, `#dashboard` o `#mobile`):
    ```
-   - [ ] [[NNN-slug]]
+   - [ ] [[NNN-slug]] #backend
    ```
+   El plugin Kanban colorea cada tag (verde / azul / naranja) → identificación visual instantánea sin importar la columna.
 3. Si la migration nace de una task, rellena `origin: tasks/00X-...` en la migration y `migrations: ["migration-<repo>/NNN-..."]` en la task.
 
 ### Cuando aplicas una migration de `migration-dashboard/` en este repo
@@ -86,7 +87,7 @@ Después de aplicar el cambio (componente, página, llamada axios en `src/Data/o
    - `status: pending` → `status: done`
    - `applied: <YYYY-MM-DD de hoy>`
 2. **Bloque `## Estado`**: marcar `[x] Aplicado en fecha: <fecha>`.
-3. **Kanban** (`kanbans/migrations.md`): mover la línea desde `📋 Pendiente` a `✅ Aplicadas` con sufijo ` · dashboard · <fecha>` y marcar `[x]`.
+3. **Kanban** (`kanbans/migrations.md`): mover la línea desde `📋 Pendiente` a `✅ Aplicadas`, marcar `[x]`, y añadir la fecha al final → `- [x] [[NNN-slug]] #dashboard <YYYY-MM-DD>`.
 4. **Notas de aplicación**: rellenar `## Notas de aplicación` con qué archivos cambiaron en `src/`, qué llamadas se añadieron a `ApiRequest.js`/`Data/obj/*.ts`.
 5. Si queda **bloqueada** (esperando endpoint backend, decisión de UX): `status: blocked` y mover a `## ⛔ Bloqueadas`.
 
