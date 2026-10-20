@@ -2,6 +2,9 @@
   "name": "materio-mui-react-nextjs-admin-template",
   "version": "1.4.0",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

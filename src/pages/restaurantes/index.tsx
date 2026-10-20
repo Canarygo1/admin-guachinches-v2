@@ -21,7 +21,7 @@ import { Cancel, Check } from "mdi-material-ui";
 import Autocomplete from '@mui/material/Autocomplete';
 import { getAllMunicipalitiesByIsland } from "../../Data/obj/municipality";
 import axios from "axios";
-import {surveyOptions} from "../../Data/obj/survey";
+import {assignCandidate, getCurrentEdition, surveyOptions} from "../../Data/obj/survey";
 
 function Index() {
   const [filterName, setFilterName] = useState<string | null>(null);
@@ -65,16 +65,21 @@ function Index() {
       return response.id; // Devuelve el ID del restaurante creado
     },
     onSuccess: async (restaurantId) => {
-      // Asignar el restaurante a las encuestas seleccionadas
-      await Promise.all(
-        selectedSurveys.map((survey) =>
-          axios.post("https://api.guachinchesmodernos.com:459/category-restaurants/assign", {
-            survey_schema_id: "1", // Ajusta este valor según tu lógica de esquema de encuesta
-            category_name: survey,
-            restaurant_id: restaurantId,
-          })
-        )
-      );
+      // Asignar el restaurante a las categorías elegidas de la edición en curso
+      // (con la clave de administración; si falta, se avisa y se puede hacer
+      // después desde «Encuesta»).
+      if (selectedSurveys.length) {
+        try {
+          const { editionId } = await getCurrentEdition();
+          await Promise.all(selectedSurveys.map((survey) => assignCandidate(editionId, survey, restaurantId)));
+        } catch (e) {
+          window.alert(
+            `El restaurante se ha creado, pero no se ha añadido a la encuesta: ${
+              e instanceof Error ? e.message : "error"
+            }. Añádelo desde «Encuesta».`
+          );
+        }
+      }
       queryClient.invalidateQueries({queryKey:["restaurants"]});
 
       setOpenDialog(false);
