@@ -4,7 +4,8 @@ import { validatePushInput } from 'src/Data/obj/push'
 import { checkAdminSession } from 'src/server/adminSession'
 
 /**
- * Envío (POST) e historial (GET ?limit=) de notificaciones push desde el
+ * Envío (POST, con islas/gustos opcionales; ≤ 5 temas FCM) e historial
+ * (GET ?limit=) de notificaciones push desde el
  * servidor del panel, para que la clave `X-Admin-Key` (migration-backend/054)
  * nunca llegue al navegador. Solo acepta la sesión de un administrador del
  * panel (src/server/adminSession.ts). Se configura con:

@@ -25,6 +25,24 @@ export const PUSH_ROUTES = [
 ] as const;
 export type PushRoute = (typeof PUSH_ROUTES)[number]["key"];
 
+/** Islas (temas `isla_<slug>`), igual que el backend. */
+export const PUSH_ISLANDS = [
+  { slug: "tenerife", name: "Tenerife" },
+  { slug: "gran_canaria", name: "Gran Canaria" },
+  { slug: "lanzarote", name: "Lanzarote" },
+  { slug: "fuerteventura", name: "Fuerteventura" },
+  { slug: "la_palma", name: "La Palma" },
+  { slug: "la_gomera", name: "La Gomera" },
+  { slug: "el_hierro", name: "El Hierro" },
+] as const;
+const ISLAND_SLUGS: readonly string[] = PUSH_ISLANDS.map((i) => i.slug);
+
+/** FCM admite como máximo 5 temas por condición (base + islas + gustos). */
+export const PUSH_MAX_TOPICS = 5;
+export const PUSH_SLUG_RE = /^[a-z0-9_]{1,64}$/;
+export const pushTopicCount = (islands: readonly unknown[] = [], categories: readonly unknown[] = []) =>
+  1 + islands.length + categories.length;
+
 export const PUSH_TITLE_MAX = 65;
 export const PUSH_BODY_MAX = 180;
 export const PUSH_LINK_MAX = 500;
@@ -56,6 +74,12 @@ export interface PushInput {
   link?: string;
   route?: PushRoute;
   dryRun?: boolean;
+
+  /** Slugs de isla; ausente = todas. */
+  islands?: string[];
+
+  /** Slugs de gusto (categorías); ausente = todos. */
+  categories?: string[];
 }
 
 /** Valida y normaliza. Devuelve el payload limpio o el nombre del primer campo inválido. */
@@ -77,6 +101,19 @@ export const validatePushInput = (raw: any): { ok: true; value: PushInput } | { 
   }
   if (r.dryRun !== undefined && typeof r.dryRun !== "boolean") return { ok: false, field: "dryRun" };
   if (r.dryRun) value.dryRun = true;
+  const slugs = (v: unknown): string[] | null => {
+    if (v === undefined || v === null) return [];
+    if (!Array.isArray(v) || v.some((x) => typeof x !== "string" || !PUSH_SLUG_RE.test(x))) return null;
+
+    return Array.from(new Set(v as string[]));
+  };
+  const islands = slugs(r.islands);
+  if (!islands || islands.some((i) => !ISLAND_SLUGS.includes(i))) return { ok: false, field: "islands" };
+  const categories = slugs(r.categories);
+  if (!categories) return { ok: false, field: "categories" };
+  if (pushTopicCount(islands, categories) > PUSH_MAX_TOPICS) return { ok: false, field: "topics" };
+  if (islands.length) value.islands = islands;
+  if (categories.length) value.categories = categories;
 
   return { ok: true, value };
 };
@@ -103,6 +140,7 @@ export const linkLista = (id: string) => `${WEB}/listas/${encodeURIComponent(id)
 export interface PushSent {
   messageId: string | null;
   dryRun: boolean;
+  condition?: string | null;
 }
 
 export interface PushLogEntry {
@@ -115,6 +153,40 @@ export interface PushLogEntry {
   dry_run: boolean;
   message_id: string | null;
   created_at: string;
+  islands: string[];
+  categories: string[];
+}
+
+/** El backend responde en camelCase (dryRun, createdAt…); aceptamos ambas formas. */
+const toLogEntry = (r: any): PushLogEntry => ({
+  id: r.id,
+  topic: r.topic,
+  title: r.title,
+  body: r.body,
+  link: r.link ?? null,
+  route: r.route ?? null,
+  dry_run: !!(r.dryRun ?? r.dry_run),
+  message_id: r.messageId ?? r.message_id ?? null,
+  created_at: r.createdAt ?? r.created_at,
+  islands: Array.isArray(r.islands) ? r.islands : [],
+  categories: Array.isArray(r.categories) ? r.categories : [],
+});
+
+export interface PushOption {
+  slug: string;
+  name: string;
+}
+
+export interface PushWeekly {
+  used: number;
+  limit: number;
+  nextAllowedAt: string | null;
+}
+
+export interface PushOptions {
+  islands: PushOption[];
+  categories: PushOption[];
+  weekly: Partial<Record<PushTopic, PushWeekly>>;
 }
 
 export type PushErrorKind =
@@ -123,6 +195,7 @@ export type PushErrorKind =
   | "backend_not_configured"
   | "bad_key"
   | "rate_limited"
+  | "weekly_limit"
   | "bad_request"
   | "unreachable"
   | "other";
@@ -146,6 +219,17 @@ const FIELD: Record<string, string> = {
   link: "el enlace (solo guachinchesmodernos.com, dondecomercanarias.com o dondecomercanarias://)",
   route: "la pantalla de destino",
   dryRun: "el modo prueba",
+  islands: "las islas",
+  categories: "los gustos",
+  topics: `la audiencia: como mucho ${PUSH_MAX_TOPICS - 1} islas y gustos en total`,
+};
+
+const fechaCorta = (iso?: string | null) => {
+  const d = iso ? new Date(iso) : null;
+
+  return d && !Number.isNaN(d.getTime())
+    ? d.toLocaleString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
+    : null;
 };
 
 const asPushError = (e: unknown): PushError => {
@@ -169,6 +253,16 @@ const asPushError = (e: unknown): PushError => {
   if (res.status === 401 || res.status === 403) {
     return new PushError("bad_key", "El backend rechaza la clave: PUSH_ADMIN_KEY del panel y del backend no coinciden.");
   }
+  if (res.status === 429 && code === "weekly_limit") {
+    const d = res.data as { topic?: string; limit?: number; nextAllowedAt?: string };
+    const label = PUSH_TOPICS.find((t) => t.key === d.topic)?.label ?? d.topic ?? "este tema";
+    const when = fechaCorta(d.nextAllowedAt);
+
+    return new PushError(
+      "weekly_limit",
+      `Límite semanal alcanzado: como mucho ${d.limit ?? "—"} envíos por semana a «${label}».${when ? ` El siguiente se podrá enviar el ${when}.` : ""}`
+    );
+  }
   if (res.status === 429) {
     const retry = Number(res.headers?.["retry-after"]);
     const when = Number.isFinite(retry) && retry > 0 ? ` Vuelve a intentarlo en ${Math.ceil(retry / 60)} min.` : " Vuelve a intentarlo más tarde.";
@@ -178,6 +272,13 @@ const asPushError = (e: unknown): PushError => {
   if (res.status === 400) {
     const f = res.data?.field;
     const msg = Array.isArray(res.data?.message) ? res.data?.message.join(", ") : res.data?.message;
+    if (code === "too_many_topics") return new PushError("bad_request", `Revisa ${FIELD.topics}.`);
+    if (code === "invalid_island") return new PushError("bad_request", "Alguna isla no es válida.");
+    if (code === "invalid_category") {
+      const bad = (res.data as { invalid?: string[] })?.invalid;
+
+      return new PushError("bad_request", `Algún gusto ya no existe${bad?.length ? `: ${bad.join(", ")}` : ""}. Recarga la página.`);
+    }
 
     return new PushError("bad_request", f && FIELD[f] ? `Revisa ${FIELD[f]}.` : `Datos no válidos${msg ? `: ${msg}` : "."}`);
   }
@@ -200,10 +301,43 @@ export const getPushHistory = async (limit = 20): Promise<PushLogEntry[]> => {
   try {
     const { data } = await axios.get("/api/push/", { params: { limit }, headers: authHeaders() });
 
-    return Array.isArray(data) ? data : [];
+    return Array.isArray(data) ? data.map(toLogEntry) : [];
   } catch (e) {
     throw asPushError(e);
   }
+};
+
+export const getPushOptions = async (): Promise<PushOptions> => {
+  try {
+    const { data } = await axios.get("/api/push/options", { headers: authHeaders() });
+
+    return {
+      islands: Array.isArray(data?.islands) ? data.islands : [],
+      categories: Array.isArray(data?.categories) ? data.categories : [],
+      weekly: data?.weekly ?? {},
+    };
+  } catch (e) {
+    throw asPushError(e);
+  }
+};
+
+/** «Lo recibirán: quienes tengan activadas las novedades, en Tenerife, que les gusten los guachinches». */
+export const audienceText = (
+  topic: PushTopic,
+  islands: readonly string[],
+  categories: readonly string[],
+  names: { islands?: PushOption[]; categories?: PushOption[] } = {}
+): string => {
+  const nameOf = (list: readonly PushOption[] | undefined, slug: string) => list?.find((o) => o.slug === slug)?.name ?? slug;
+  const join = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} o ${xs[xs.length - 1]}`);
+  const base = topic === "premios" ? "los avisos de Premios" : "las novedades";
+  const parts = [`quienes tengan activad${topic === "premios" ? "os" : "as"} ${base}`];
+  parts.push(
+    islands.length ? `en ${join(islands.map((s) => nameOf(names.islands ?? (PUSH_ISLANDS as unknown as PushOption[]), s)))}` : "en todas las islas"
+  );
+  if (categories.length) parts.push(`que les guste ${join(categories.map((s) => `«${nameOf(names.categories, s)}»`))}`);
+
+  return `Lo recibirán: ${parts.join(", ")}`;
 };
 
 // ── Listas curadas (selector de destino) ─────────────────────────────────

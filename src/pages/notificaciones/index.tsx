@@ -35,20 +35,27 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { API_V2, CatalogItem, getCatalog } from "src/Data/obj/survey";
 import {
   PUSH_BODY_MAX,
+  PUSH_ISLANDS,
+  PUSH_MAX_TOPICS,
   PUSH_ROUTES,
   PUSH_TITLE_MAX,
   PUSH_TOPICS,
   PushError,
   PushInput,
   PushLogEntry,
+  PushOption,
+  PushOptions,
   PushRoute,
   PushTopic,
+  audienceText,
   getCuratedLists,
   getPushHistory,
+  getPushOptions,
   isValidPushLink,
   linkFicha,
   linkLista,
   linkVotar,
+  pushTopicCount,
   sendPush,
 } from "src/Data/obj/push";
 
@@ -90,6 +97,25 @@ const destinoTexto = (link?: string | null, route?: string | null) => {
   if (m?.[1] === "premios/votar") return "Votar a un sitio";
 
   return link;
+};
+
+const fechaLarga = (iso?: string | null) => {
+  const d = iso ? new Date(iso) : null;
+
+  return d && !Number.isNaN(d.getTime())
+    ? d.toLocaleString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
+    : null;
+};
+
+/** «Todas las islas · Tenerife» etc. para el historial. */
+const audienciaCorta = (row: PushLogEntry, opts?: PushOptions) => {
+  const name = (list: readonly PushOption[] | undefined, slug: string) => list?.find((o) => o.slug === slug)?.name ?? slug;
+  const islas = row.islands.length
+    ? row.islands.map((s) => name(opts?.islands ?? (PUSH_ISLANDS as unknown as PushOption[]), s)).join(", ")
+    : "Todas las islas";
+  const gustos = row.categories.length ? row.categories.map((s) => name(opts?.categories, s)).join(", ") : "";
+
+  return gustos ? `${islas} · ${gustos}` : islas;
 };
 
 const Counter = ({ n, max }: { n: number; max: number }) => (
@@ -173,6 +199,8 @@ function Notificaciones() {
   const [sitio, setSitio] = useState<CatalogItem | null>(null);
   const [listaId, setListaId] = useState("");
   const [url, setUrl] = useState("");
+  const [islands, setIslands] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const [sending, setSending] = useState<"dry" | "real" | null>(null);
   const [confirm, setConfirm] = useState(false);
@@ -195,6 +223,22 @@ function Notificaciones() {
     refetchOnWindowFocus: false,
     staleTime: 10 * 60_000,
   });
+  const options = useQuery<PushOptions, PushError>({
+    queryKey: ["pushOptions"],
+    queryFn: getPushOptions,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  const islandOptions: PushOption[] = options.data?.islands?.length
+    ? options.data.islands
+    : (PUSH_ISLANDS as unknown as PushOption[]);
+  const categoryOptions: PushOption[] = options.data?.categories ?? [];
+  const weekly = options.data?.weekly?.[topic];
+  const weeklyFull = !!weekly && weekly.used >= weekly.limit;
+  const topicCount = pushTopicCount(islands, categories);
+  const tooManyTopics = topicCount > PUSH_MAX_TOPICS;
+  const audiencia = audienceText(topic, islands, categories, { islands: islandOptions, categories: categoryOptions });
+
   const history = useQuery<PushLogEntry[], PushError>({
     queryKey: ["pushHistory"],
     queryFn: () => getPushHistory(20),
@@ -226,7 +270,14 @@ function Notificaciones() {
 
   const titleLen = title.trim().length;
   const bodyLen = body.trim().length;
-  const formOk = titleLen > 0 && titleLen <= PUSH_TITLE_MAX && bodyLen > 0 && bodyLen <= PUSH_BODY_MAX && !target.missing && !target.invalid;
+  const formOk =
+    titleLen > 0 &&
+    titleLen <= PUSH_TITLE_MAX &&
+    bodyLen > 0 &&
+    bodyLen <= PUSH_BODY_MAX &&
+    !target.missing &&
+    !target.invalid &&
+    !tooManyTopics;
 
   const payload = (dryRun: boolean): PushInput => ({
     topic,
@@ -234,6 +285,8 @@ function Notificaciones() {
     body: body.trim(),
     ...(target.link ? { link: target.link } : {}),
     ...(target.route ? { route: target.route } : {}),
+    ...(islands.length ? { islands } : {}),
+    ...(categories.length ? { categories } : {}),
     dryRun,
   });
 
@@ -252,7 +305,7 @@ function Notificaciones() {
         setResult({
           severity: "success",
           title: "Notificación enviada",
-          text: `Enviada a los suscritos a «${topicLabel(topic)}»${r.messageId ? ` (id ${r.messageId})` : ""}.`,
+          text: `${audiencia}.${r.messageId ? ` (id ${r.messageId})` : ""}`,
         });
         setToast("Notificación enviada");
       }
@@ -262,6 +315,7 @@ function Notificaciones() {
     } finally {
       setSending(null);
       qc.invalidateQueries({ queryKey: ["pushHistory"] });
+      if (!dryRun) qc.invalidateQueries({ queryKey: ["pushOptions"] });
     }
   };
 
@@ -279,6 +333,19 @@ function Notificaciones() {
       headerName: "Tema",
       width: 190,
       renderCell: (p) => <Chip size="small" label={topicLabel(p.row.topic)} color={p.row.topic === "premios" ? "warning" : "info"} variant="outlined" />,
+    },
+    {
+      field: "audiencia",
+      headerName: "Audiencia",
+      flex: 1,
+      minWidth: 200,
+      sortable: false,
+      valueGetter: (p) => audienciaCorta(p.row, options.data),
+      renderCell: (p) => (
+        <Tooltip title={audienceText(p.row.topic as PushTopic, p.row.islands, p.row.categories, options.data)}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{audienciaCorta(p.row, options.data)}</span>
+        </Tooltip>
+      ),
     },
     {
       field: "title",
@@ -344,6 +411,56 @@ function Notificaciones() {
                   </Select>
                   <FormHelperText>Solo la recibirán quienes tengan activado este tema.</FormHelperText>
                 </FormControl>
+
+                {weekly && (
+                  <Alert severity={weeklyFull ? "warning" : "info"} sx={{ py: 0 }}>
+                    Esta semana: {weekly.used} de {weekly.limit} envíos de {topicLabel(topic)}.
+                    {weeklyFull && fechaLarga(weekly.nextAllowedAt)
+                      ? ` El siguiente se podrá enviar el ${fechaLarga(weekly.nextAllowedAt)}.`
+                      : ""}
+                  </Alert>
+                )}
+                {options.isError && (
+                  <Alert severity="warning" sx={{ py: 0 }}>
+                    No se pudieron cargar los gustos ni el cupo semanal: {options.error?.message}
+                  </Alert>
+                )}
+
+                <Autocomplete
+                  multiple
+                  options={islandOptions}
+                  value={islandOptions.filter((o) => islands.includes(o.slug))}
+                  onChange={(_e, v) => setIslands(v.map((o) => o.slug))}
+                  getOptionLabel={(o) => o.name}
+                  isOptionEqualToValue={(a, b) => a.slug === b.slug}
+                  disableCloseOnSelect
+                  renderInput={(params) => (
+                    <TextField {...params} label="Islas" placeholder={islands.length ? "" : "Todas las islas"} />
+                  )}
+                />
+                <Autocomplete
+                  multiple
+                  options={categoryOptions}
+                  loading={options.isLoading}
+                  value={categoryOptions.filter((o) => categories.includes(o.slug))}
+                  onChange={(_e, v) => setCategories(v.map((o) => o.slug))}
+                  getOptionLabel={(o) => o.name}
+                  isOptionEqualToValue={(a, b) => a.slug === b.slug}
+                  disableCloseOnSelect
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Gustos"
+                      placeholder={categories.length ? "" : "Todos los gustos"}
+                      error={tooManyTopics}
+                      helperText={
+                        tooManyTopics
+                          ? `Demasiados filtros: como mucho ${PUSH_MAX_TOPICS - 1} islas y gustos en total (llevas ${topicCount - 1}).`
+                          : `Vacío = todos. Islas y gustos suman como mucho ${PUSH_MAX_TOPICS - 1} (límite de Firebase).`
+                      }
+                    />
+                  )}
+                />
 
                 <TextField
                   label="Título"
@@ -495,7 +612,7 @@ function Notificaciones() {
                   <Button
                     variant="contained"
                     startIcon={sending === "real" ? <CircularProgress size={16} color="inherit" /> : <Send />}
-                    disabled={!formOk || busy}
+                    disabled={!formOk || busy || weeklyFull}
                     onClick={() => setConfirm(true)}
                   >
                     Enviar a todos los suscritos
@@ -511,6 +628,9 @@ function Notificaciones() {
             <CardHeader title="Vista previa" subheader="Así se verá en un iPhone (aproximado)" />
             <CardContent>
               <IphonePreview title={title} body={body} />
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                {audiencia}.
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -558,6 +678,9 @@ function Notificaciones() {
           <DialogContentText sx={{ mb: 3 }}>
             Se enviará ahora a todos los suscritos al tema <b>«{topicLabel(topic)}»</b>. No se puede deshacer.
           </DialogContentText>
+          <Alert severity="info" sx={{ mb: 3 }}>
+            {audiencia}.
+          </Alert>
           <Stack spacing={1.5}>
             <Box>
               <Typography variant="caption" color="text.secondary">
@@ -584,6 +707,7 @@ function Notificaciones() {
           <Button
             variant="contained"
             startIcon={<Send />}
+            disabled={weeklyFull || tooManyTopics}
             onClick={() => {
               setConfirm(false);
               send(false);
