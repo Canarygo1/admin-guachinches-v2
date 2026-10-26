@@ -36,6 +36,7 @@ import ThemeComponent from 'src/@core/theme/ThemeComponent'
 import AuthGuard from 'src/@core/components/auth/AuthGuard'
 import GuestGuard from 'src/@core/components/auth/GuestGuard'
 import WindowWrapper from 'src/@core/components/window-wrapper'
+import AdminKeyDialog from 'src/components/AdminKeyDialog'
 
 // ** Spinner Import
 import Spinner from 'src/@core/components/spinner'
@@ -151,6 +152,7 @@ const App = (props: ExtendedAppProps) => {
                         </AclGuard>
                       </Guard>
                     </WindowWrapper>
+                    <AdminKeyDialog />
                     <ReactHotToast>
                       <Toaster position={settings.toastPosition} toastOptions={{ className: 'react-hot-toast' }} />
                     </ReactHotToast>
