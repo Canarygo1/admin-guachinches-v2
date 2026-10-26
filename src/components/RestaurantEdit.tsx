@@ -9,9 +9,11 @@ import CategoryGrid from "./CategoryGrid";
 import RestaurantForm from "./restaurantForm";
 import {Area, getAllMunicipalities} from "../Data/obj/municipality";
 import {Category, getAllCategories} from "../Data/obj/category";
-import {getRestaurantById, Restaurant} from "../Data/obj/restaurant";
+import {getRestaurantAdminById, getRestaurantById, Restaurant, RestaurantAdmin} from "../Data/obj/restaurant";
+import {AdminKeyError, clearAdminKey, getAdminKey, setAdminKey} from "../Data/obj/adminKey";
 import PhotoGallery from "./PhotoGallery";
 import VideoGallery from "./VideoGallery";
+import RestaurantPagos, {PagosStatus} from "./RestaurantPagos";
 
 
 function RestaurantEdit({restaurantId}: {restaurantId: string}) {
@@ -57,6 +59,60 @@ function RestaurantEdit({restaurantId}: {restaurantId: string}) {
     municipio: null as Area | null
   });
 
+  // ── Datos de cobro (migration-dashboard/010) ──────────────────────────────
+  // Van aparte de la ficha para que meter la clave no reinicie el formulario.
+  const [adminKey, setAdminKeyState] = useState<string | null>(null);
+  const [keyVersion, setKeyVersion] = useState(0);
+  const [keyError, setKeyError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAdminKeyState(getAdminKey());
+  }, []);
+
+  const adminQuery = useQuery<RestaurantAdmin | null, Error>({
+    queryFn: () => getRestaurantAdminById(restaurantId, adminKey as string),
+    queryKey: ['restaurantAdmin', restaurantId, keyVersion],
+    enabled: !!adminKey,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+  const admin = adminQuery.data;
+  const adminError = adminQuery.error;
+
+  useEffect(() => {
+    // 401: getRestaurantAdminById ya ha borrado la clave; se vuelve a pedir.
+    if (adminError instanceof AdminKeyError && adminError.kind === 'unauthorized') {
+      setAdminKeyState(null);
+      setKeyError(adminError.message);
+    }
+  }, [adminError]);
+
+  useEffect(() => {
+    if (admin?.ultimoPago) {
+      setEditableFields((prev) => ({ ...prev, ultimoPago: admin.ultimoPago as string }));
+    }
+  }, [admin]);
+
+  const handleSubmitKey = (key: string) => {
+    setAdminKey(key);
+    setAdminKeyState(key);
+    setKeyError(null);
+    setKeyVersion((v) => v + 1);
+  };
+  const handleForgetKey = () => {
+    clearAdminKey();
+    setAdminKeyState(null);
+    setKeyError(null);
+  };
+
+  let pagosStatus: PagosStatus = 'no_key';
+  if (adminKey) {
+    if (adminQuery.isLoading) pagosStatus = 'loading';
+    else if (adminError instanceof AdminKeyError && adminError.kind === 'not_configured') pagosStatus = 'not_configured';
+    else if (adminError) pagosStatus = 'error';
+    else pagosStatus = admin ? 'ok' : 'unavailable';
+  }
+
   useEffect(() => {
     if (restaurant) {
       const assignedMunicipio = municipios.find(m => m.Id === restaurant.municipios.Id);
@@ -70,7 +126,10 @@ function RestaurantEdit({restaurantId}: {restaurantId: string}) {
         instagram_link: restaurant.instagram_link,
         direccion: restaurant.direccion,
         telefono: restaurant.telefono,
-        ultimoPago: restaurant.ultimoPago,
+
+        // Con clave, la del endpoint de administración; si no, la que aún traiga
+        // la ficha pública (antes del despliegue del backend). Vacía no se envía.
+        ultimoPago: admin?.ultimoPago ?? restaurant.ultimoPago ?? '',
         googleUrl: restaurant.googleUrl,
         municipio: assignedMunicipio || null
       });
@@ -117,6 +176,16 @@ function RestaurantEdit({restaurantId}: {restaurantId: string}) {
           municipios={municipios}
           handleChange={handleChange}
           handleMunicipioChange={handleMunicipioChange}
+        />
+        <RestaurantPagos
+          status={pagosStatus}
+          admin={admin}
+          publicUltimoPago={restaurant?.ultimoPago}
+          keyError={keyError}
+          errorMessage={adminError?.message}
+          onSubmitKey={handleSubmitKey}
+          onForgetKey={handleForgetKey}
+          onRetry={() => adminQuery.refetch()}
         />
       </Grid>
       <Grid item xs={6}  sx={{
